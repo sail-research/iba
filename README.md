@@ -33,3 +33,16 @@ You can modify the following parameters to reproduce different scenarios:
 Please refer to the paper for detailed results and additional configurations.
 
 Please note that I have made some assumptions and corrections based on the given context. Make sure to review and adjust the changes if necessary.
+
+Please cite the paper, as below, when using this repository:
+```
+@inproceedings{
+    nguyen2023iba,
+    title={{IBA}: Towards Irreversible Backdoor Attacks in Federated Learning},
+    author={Dung Thuy Nguyen and Tuan Minh Nguyen and Anh Tuan Tran and Khoa D Doan and KOK-SENG WONG},
+    booktitle={Thirty-seventh Conference on Neural Information Processing Systems},
+    year={2023},
+    url={https://openreview.net/forum?id=cemEOP8YoC}
+}
+```
+
