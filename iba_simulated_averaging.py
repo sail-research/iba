@@ -1,29 +1,16 @@
+from iba_helpers import create_trigger_model
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
-import torch.backends.cudnn as cudnn
-from collections import namedtuple
 
-import torchvision.transforms as transforms
-from torchvision import datasets, transforms
-
-import os
 import argparse
-import pdb
 import copy
 import numpy as np
-from torch.optim import lr_scheduler
+import copy
 
 from utils import *
 from fl_trainer import *
 from models.vgg import get_vgg_model
-from models.resnet import ResNet18TinyImagenet
-
-import wandb
-
-from lira_helper import *
-
 
 READ_CKPT=True
 
@@ -159,7 +146,7 @@ if __name__ == "__main__":
      
      
     # PARSER arguments for LIRA backdoor attack only
-    lira_args = {
+    iba_args = {
         'eps': args.atk_eps,
         'epochs': 50,
         'lr': 0.02,
@@ -194,7 +181,7 @@ if __name__ == "__main__":
     #                         group=group_name)
     wandb_ins = None
 
-    # lira_args = namedtuple('Struct', lira_args.keys())(*lira_args.values())
+    # iba_args = namedtuple('Struct', iba_args.keys())(*iba_args.values())
     
     logger.info("Running LIRA backdoor attack in FL with args: {}".format(args))
     logger.info(device)
@@ -202,27 +189,25 @@ if __name__ == "__main__":
     
     # START loading the transformation model/ attack model
     atkmodel, tgtmodel = create_trigger_model(args.dataset, device)
+    # init_model(atkmodel, device).to(device)
+    # init_model(tgtmodel, device).to(device)
 
     torch.manual_seed(args.seed)
     criterion = nn.CrossEntropyLoss()
 
     # add random seed for the experiment for reproducibility
     seed_experiment(seed=args.rand_seed)
-
-    import copy
     # the hyper-params are inspired by the paper "Can you really backdoor FL?" (https://arxiv.org/pdf/1911.07963.pdf)
     # partition_strategy = "homo"
     partition_strategy = "hetero-dir"
+    dir_alpha = 0.5
     # print("Process partition_data function")
     # dir_alpha = 0.01 if args.dataset == "tiny-imagenet" else 0.5
-    
-    dir_alpha = 0.5
+    # dir_alpha = 0.5
     
     net_dataidx_map = partition_data(
             args.dataset, './data', partition_strategy,
             args.num_nets, dir_alpha, args) # 0.5 for cifar10, mnist; 0.01 for tinyimagenet
-
-
     # exit(0)
     
     # rounds of fl to conduct
@@ -245,20 +230,12 @@ if __name__ == "__main__":
                 ckpt_state_dict = torch.load(ckpt_file, map_location=device)
         elif args.model in ("vgg9", "vgg11", "vgg13", "vgg16"):
             net_avg = get_vgg_model(args.model).to(device)
-            # net_avg = VGG(args.model.upper()).to(device)
-            # load model here
-            #with open("./checkpoint/trained_checkpoint_vanilla.pt", "rb") as ckpt_file:
             with open("./checkpoint/Cifar10_{}_10epoch.pt".format(args.model.upper()), "rb") as ckpt_file:
                 ckpt_state_dict = torch.load(ckpt_file, map_location=device)
-                
         elif args.model in ("resnet18tiny"):
             from models.resnet_tinyimagenet import resnet18
             net_avg = resnet18(num_classes=200).to(device)
-            # net_avg = ResNet18TinyImagenet()
             ckpt_state_dict = torch.load(f"checkpoint/tiny-imagenet-resnet18.pt", map_location=device)
-             
-            # with open("./checkpoint/tiny-resnet.epoch_20".format(args.model.upper()), "rb") as ckpt_file:
-                # ckpt_state_dict = torch.load(ckpt_file['state_dict'], map_location=device)
                 
         net_avg.load_state_dict(ckpt_state_dict)
         logger.info("Loading checkpoint file successfully ...")
@@ -274,9 +251,6 @@ if __name__ == "__main__":
             
     scratch_model = copy.deepcopy(net_avg)
     logger.info("Test the model performance on the entire task before FL process ... ")
-
-    # test(net_avg, device, vanilla_test_loader, test_batch_size=args.test_batch_size, criterion=criterion, mode="raw-task", dataset=args.dataset)
-    # test(net_avg, device, targetted_task_test_loader, test_batch_size=args.test_batch_size, criterion=criterion, mode="targetted-task", dataset=args.dataset, poison_type=args.poison_type)
 
     # let's remain a copy of the global model for measuring the norm distance:
     vanilla_model = copy.deepcopy(net_avg)
@@ -338,7 +312,7 @@ if __name__ == "__main__":
             "scratch_model": scratch_model,
         }
         print("Start FrequencyFederatedLearningTrainer training")
-        frequency_fl_trainer = FrequencyFederatedLearningTrainer(arguments=arguments, lira_args=lira_args)
+        frequency_fl_trainer = FrequencyFederatedLearningTrainer(arguments=arguments, iba_args=iba_args)
         frequency_fl_trainer.run(wandb_ins = wandb_ins)
         
     elif args.fl_mode == "fixed-pool":
@@ -379,7 +353,7 @@ if __name__ == "__main__":
             "attack_method":args.attack_method,
             "eps":args.eps,
             "atk_lr":args.atk_lr,
-            
+            "attacking_fl_rounds":[i for i in range(1, args.fl_round + 1) if (i-1)%args.attack_freq == 0], # one attacker participating each training round
             "norm_bound":args.norm_bound,
             "poison_type":args.poison_type,
             "device":device,
@@ -391,41 +365,9 @@ if __name__ == "__main__":
             "stddev":args.stddev,
             "atkmodel": atkmodel,
             "tgtmodel": tgtmodel,
-            # "create_net": create_net,
             "scratch_model": scratch_model,
-            
+            "atk_baseline":args.atk_baseline,
      }
 
-        fixed_pool_fl_trainer = FixedPoolFederatedLearningTrainer(arguments=arguments, lira_args=lira_args)
+        fixed_pool_fl_trainer = FixedPoolFederatedLearningTrainer(arguments=arguments, iba_args=iba_args)
         fixed_pool_fl_trainer.run(wandb_ins = wandb_ins)
-
-    # (old version) Depracated
-    # # prepare fashionMNIST dataset
-    # fashion_mnist_train_dataset = datasets.FashionMNIST('./data', train=True, download=True,
-    #                    transform=transforms.Compose([
-    #                        transforms.ToTensor(),
-    #                        transforms.Normalize((0.1307,), (0.3081,))
-    #                    ]))
-
-    # fashion_mnist_test_dataset = datasets.FashionMNIST('./data', train=False, transform=transforms.Compose([
-    #                        transforms.ToTensor(),
-    #                        transforms.Normalize((0.1307,), (0.3081,))
-    #                    ]))
-    # # prepare EMNIST dataset
-    # emnist_train_dataset = datasets.EMNIST('./data', split="digits", train=True, download=True,
-    #                    transform=transforms.Compose([
-    #                        transforms.ToTensor(),
-    #                        transforms.Normalize((0.1307,), (0.3081,))
-    #                    ]))
-    # emnist_test_dataset = datasets.EMNIST('./data', split="digits", train=False, transform=transforms.Compose([
-    #                        transforms.ToTensor(),
-    #                        transforms.Normalize((0.1307,), (0.3081,))
-    #                    ]))
-
-    # # okay, so what we really need here is just three loaders: i.e. poisoned training loader, poisoned test loader, normal test loader
-    # poisoned_emnist_train_loader = torch.utils.data.DataLoader(poisoned_emnist_dataset,
-    #      batch_size=args.batch_size, shuffle=True, **kwargs)
-    # vanilla_emnist_test_loader = torch.utils.data.DataLoader(emnist_test_dataset,
-    #      batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    # targetted_task_test_loader = torch.utils.data.DataLoader(fashion_mnist_test_dataset,
-    #      batch_size=args.test_batch_size, shuffle=False, **kwargs)

@@ -116,7 +116,7 @@ def get_dba_poison(inputs, opt):
         new_images = new_images.to(opt.device)
     return new_images
 
-from datasets import MNIST_truncated, EMNIST_truncated, CIFAR10_truncated, CIFAR10_Poisoned, CIFAR10NormalCase_truncated, EMNIST_NormalCase_truncated, TinyImageNet_truncated, ImageFolderTruncated
+from datasets import MNIST_truncated, EMNIST_truncated, CIFAR10_truncated, TinyImageNet_truncated, ImageFolderTruncated
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -741,636 +741,285 @@ def get_dataloader(dataset, datadir, train_bs, test_bs, dataidxs=None):
         
     return train_dl, None
 
-def get_dataloader_normal_case(dataset, datadir, train_bs, test_bs, 
-                                dataidxs=None, 
-                                user_id=0, 
-                                num_total_users=200,
-                                poison_type="southwest",
-                                ardis_dataset=None,
-                                attack_case='normal-case'):
-    if dataset in ('mnist', 'emnist', 'cifar10'):
-        if dataset == 'mnist':
-            dl_obj = MNIST_truncated
+# def get_dataloader_normal_case(dataset, datadir, train_bs, test_bs, 
+#                                 dataidxs=None, 
+#                                 user_id=0, 
+#                                 num_total_users=200,
+#                                 poison_type="southwest",
+#                                 ardis_dataset=None,
+#                                 attack_case='normal-case'):
+#     if dataset in ('mnist', 'emnist', 'cifar10'):
+#         if dataset == 'mnist':
+#             dl_obj = MNIST_truncated
 
-            transform_train = transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))])
+#             transform_train = transforms.Compose([
+#                            transforms.ToTensor(),
+#                            transforms.Normalize((0.1307,), (0.3081,))])
 
-            transform_test = transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))])
-        if dataset == 'emnist':
-            dl_obj = EMNIST_NormalCase_truncated
+#             transform_test = transforms.Compose([
+#                            transforms.ToTensor(),
+#                            transforms.Normalize((0.1307,), (0.3081,))])
+#         if dataset == 'emnist':
+#             dl_obj = EMNIST_NormalCase_truncated
 
-            transform_train = transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))])
+#             transform_train = transforms.Compose([
+#                            transforms.ToTensor(),
+#                            transforms.Normalize((0.1307,), (0.3081,))])
 
-            transform_test = transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))])
-        elif dataset == 'cifar10':
-            dl_obj = CIFAR10NormalCase_truncated
+#             transform_test = transforms.Compose([
+#                            transforms.ToTensor(),
+#                            transforms.Normalize((0.1307,), (0.3081,))])
+#         elif dataset == 'cifar10':
+#             dl_obj = CIFAR10NormalCase_truncated
 
-            normalize = transforms.Normalize(mean=[x/255.0 for x in [125.3, 123.0, 113.9]],
-                                std=[x/255.0 for x in [63.0, 62.1, 66.7]])
-            transform_train = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Lambda(lambda x: F.pad(
-                                    Variable(x.unsqueeze(0), requires_grad=False),
-                                    (4,4,4,4),mode='reflect').data.squeeze()),
-                transforms.ToPILImage(),
-                transforms.RandomCrop(32),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                normalize,
-                ])
-            # data prep for test set
-            transform_test = transforms.Compose([transforms.ToTensor(),normalize])
+#             normalize = transforms.Normalize(mean=[x/255.0 for x in [125.3, 123.0, 113.9]],
+#                                 std=[x/255.0 for x in [63.0, 62.1, 66.7]])
+#             transform_train = transforms.Compose([
+#                 transforms.ToTensor(),
+#                 transforms.Lambda(lambda x: F.pad(
+#                                     Variable(x.unsqueeze(0), requires_grad=False),
+#                                     (4,4,4,4),mode='reflect').data.squeeze()),
+#                 transforms.ToPILImage(),
+#                 transforms.RandomCrop(32),
+#                 transforms.RandomHorizontalFlip(),
+#                 transforms.ToTensor(),
+#                 normalize,
+#                 ])
+#             # data prep for test set
+#             transform_test = transforms.Compose([transforms.ToTensor(),normalize])
 
-        # this only supports cifar10 right now, please be super careful when calling it using other datasets
-        # def __init__(self, root, 
-        #                 dataidxs=None, 
-        #                 train=True, 
-        #                 transform=None, 
-        #                 target_transform=None, 
-        #                 download=False,
-        #                 user_id=0,
-        #                 num_total_users=200,
-        #                 poison_type="southwest"):        
-        train_ds = dl_obj(datadir, dataidxs=dataidxs, train=True, transform=transform_train, download=True,
-                                    user_id=user_id, num_total_users=num_total_users, poison_type=poison_type,
-                                    ardis_dataset_train=ardis_dataset, attack_case=attack_case)
+#         # this only supports cifar10 right now, please be super careful when calling it using other datasets
+#         # def __init__(self, root, 
+#         #                 dataidxs=None, 
+#         #                 train=True, 
+#         #                 transform=None, 
+#         #                 target_transform=None, 
+#         #                 download=False,
+#         #                 user_id=0,
+#         #                 num_total_users=200,
+#         #                 poison_type="southwest"):        
+#         train_ds = dl_obj(datadir, dataidxs=dataidxs, train=True, transform=transform_train, download=True,
+#                                     user_id=user_id, num_total_users=num_total_users, poison_type=poison_type,
+#                                     ardis_dataset_train=ardis_dataset, attack_case=attack_case)
         
-        test_ds = None #dl_obj(datadir, train=False, transform=transform_test, download=True)
+#         test_ds = None #dl_obj(datadir, train=False, transform=transform_test, download=True)
 
-        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, shuffle=True)
-        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, shuffle=False)
+#         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, shuffle=True)
+#         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, shuffle=False)
 
-    return train_dl, test_dl
+#     return train_dl, test_dl
+
+def _get_dataloader_kwargs(args):
+    """Get common DataLoader kwargs based on CUDA availability."""
+    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    return {'num_workers': args.num_workers, 'pin_memory': True} if use_cuda else {}
+
+
+def _load_mnist_dataset(args, num_sampled_data_points):
+    """Load and prepare MNIST/EMNIST dataset."""
+    # Prepare transforms
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        # transforms.Normalize((0.1307,), (0.3081,))  # Uncomment if normalization needed
+    ])
+    
+    # Load datasets
+    train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    
+    # Sample data points
+    total_samples = len(train_dataset)
+    sampled_indices = np.random.choice(total_samples, num_sampled_data_points, replace=False)
+    
+    # Subset the training data
+    train_dataset.data = train_dataset.data[sampled_indices, :, :]
+    train_dataset.targets = np.array(train_dataset.targets)[sampled_indices]
+    
+    # Create data loaders
+    kwargs = _get_dataloader_kwargs(args)
+    vanilla_test_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    clean_train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
+    
+    return {
+        'poisoned_train_loader': None,
+        'vanilla_test_loader': vanilla_test_loader,
+        'targetted_task_test_loader': None,
+        'clean_train_loader': clean_train_loader,
+        'num_dps_poisoned_dataset': train_dataset.data.shape[0]
+    }
+
+
+def _load_tiny_imagenet_dataset(args, num_sampled_data_points):
+    """Load and prepare Tiny ImageNet dataset."""
+    # Normalization parameters
+    normalize = transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
+    
+    # Transforms
+    transform_train = transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize,
+    ])
+    
+    transform_test = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        normalize,
+    ])
+    
+    # Load validation dataset for testing
+    vanilla_test_loader = torch.utils.data.DataLoader(
+        datasets.ImageFolder("data/tiny-imagenet-200/val", transform_test),
+        batch_size=args.test_batch_size, shuffle=False,
+        num_workers=args.num_workers, pin_memory=True
+    )
+    
+    # Load and sample training dataset
+    train_dataset = datasets.ImageFolder("data/tiny-imagenet-200/train", transform_train)
+    total_datapoints = len(train_dataset.imgs)
+    sampled_indices = np.random.choice(total_datapoints, num_sampled_data_points, replace=False)
+    
+    # Clean up memory
+    del train_dataset
+    
+    # Create truncated dataset
+    train_dataset = ImageFolderTruncated(
+        root="data/tiny-imagenet-200/train",
+        dataidxs=sampled_indices,
+        transform=transform_train
+    )
+    
+    logger.info(f"Num dps in poisoned dataset: {len(train_dataset.imgs)}")
+    
+    # Create data loader
+    clean_train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True,
+        num_workers=args.num_workers, pin_memory=True
+    )
+    
+    return {
+        'poisoned_train_loader': None,
+        'vanilla_test_loader': vanilla_test_loader,
+        'targetted_task_test_loader': None,
+        'clean_train_loader': clean_train_loader,
+        'num_dps_poisoned_dataset': num_sampled_data_points
+    }
+
+
+def _load_cifar10_dataset(args, num_sampled_data_points):
+    """Load and prepare CIFAR-10 dataset."""
+    # Transforms
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+    
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+    
+    # Load training dataset
+    trainset = torchvision.datasets.CIFAR10(
+        root='./data', train=True, download=True, transform=transform_train
+    )
+    
+    # Sample and create poisoned dataset
+    poisoned_trainset = copy.deepcopy(trainset)
+    sampled_indices = np.random.choice(
+        poisoned_trainset.data.shape[0], num_sampled_data_points, replace=False
+    )
+    poisoned_trainset.data = poisoned_trainset.data[sampled_indices, :, :, :]
+    poisoned_trainset.targets = np.array(poisoned_trainset.targets)[sampled_indices]
+    
+    logger.info(f"Num clean data points in the mixed dataset: {num_sampled_data_points}")
+    
+    # Keep a copy of clean data
+    clean_trainset = copy.deepcopy(poisoned_trainset)
+    
+    # Log dataset information
+    logger.info(f"Poisoned trainset data shape: {poisoned_trainset.data.shape}")
+    logger.info(f"Poisoned trainset targets shape: {poisoned_trainset.targets.shape}")
+    logger.info(f"Sum of poisoned targets: {sum(poisoned_trainset.targets)}")
+    
+    # Create data loaders
+    kwargs = _get_dataloader_kwargs(args)
+    poisoned_train_loader = torch.utils.data.DataLoader(
+        poisoned_trainset, batch_size=args.batch_size, shuffle=True, **kwargs
+    )
+    clean_train_loader = torch.utils.data.DataLoader(
+        clean_trainset, batch_size=args.batch_size, shuffle=True, **kwargs
+    )
+    
+    # Load test dataset
+    testset = torchvision.datasets.CIFAR10(
+        root='./data', train=False, download=True, transform=transform_test
+    )
+    poisoned_testset = copy.deepcopy(testset)
+    
+    vanilla_test_loader = torch.utils.data.DataLoader(
+        testset, batch_size=args.test_batch_size, shuffle=False, **kwargs
+    )
+    targetted_task_test_loader = torch.utils.data.DataLoader(
+        poisoned_testset, batch_size=args.test_batch_size, shuffle=False, **kwargs
+    )
+    
+    return {
+        'poisoned_train_loader': poisoned_train_loader,
+        'vanilla_test_loader': vanilla_test_loader,
+        'targetted_task_test_loader': targetted_task_test_loader,
+        'clean_train_loader': clean_train_loader,
+        'num_dps_poisoned_dataset': poisoned_trainset.data.shape[0]
+    }
+
 
 def load_poisoned_dataset(args):
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
-    kwargs = {'num_workers': args.num_workers, 'pin_memory': True} if use_cuda else {}
+    """Load poisoned dataset based on the specified dataset type.
+    
+    Args:
+        args: Arguments object containing dataset configuration
+        
+    Returns:
+        tuple: (poisoned_train_loader, vanilla_test_loader, targetted_task_test_loader, 
+                num_dps_poisoned_dataset, clean_train_loader)
+    """
     num_sampled_data_points = args.num_dps_attacker
+    
+    # Handle fraction parameter for MNIST/EMNIST
     if args.dataset in ("mnist", "emnist"):
         if args.fraction < 1:
-            fraction=args.fraction  #0.1 #10
+            fraction = args.fraction
         else:
-            fraction=int(args.fraction)
-
+            fraction = int(args.fraction)
         
-        # with open("poisoned_dataset_fraction_{}".format(fraction), "rb") as saved_data_file:
-        #     poisoned_dataset = torch.load(saved_data_file)
-        # num_dps_poisoned_dataset = poisoned_dataset.data.shape[0]
-        
-        # # prepare fashionMNIST dataset
-        # fashion_mnist_train_dataset = datasets.FashionMNIST('./data', train=True, download=True,
-        #                    transform=transforms.Compose([
-        #                        transforms.ToTensor(),
-        #                        transforms.Normalize((0.1307,), (0.3081,))
-        #                    ]))
-
-        # fashion_mnist_test_dataset = datasets.FashionMNIST('./data', train=False, transform=transforms.Compose([
-        #                        transforms.ToTensor(),
-        #                        transforms.Normalize((0.1307,), (0.3081,))
-        #                    ]))
-        # # prepare EMNIST dataset
-        # emnist_train_dataset = datasets.EMNIST('./data', split="digits", train=True, download=True,
-        #                    transform=transforms.Compose([
-        #                        transforms.ToTensor(),
-        #                        transforms.Normalize((0.1307,), (0.3081,))
-        #                    ]))
-        # emnist_test_dataset = datasets.EMNIST('./data', split="digits", train=False, transform=transforms.Compose([
-        #                        transforms.ToTensor(),
-        #                        transforms.Normalize((0.1307,), (0.3081,))
-        #                    ]))
-        
-        # prepare MNIST dataset
-        mnist_train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transforms.Compose([
-                                   transforms.ToTensor(),
-                                   # transforms.Normalize((0.1307,), (0.3081,))
-                               ]))
-        mnist_test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transforms.Compose([
-                                   transforms.ToTensor(),
-                                   # transforms.Normalize((0.1307,), (0.3081,))
-                               ]))
-        total_training_samples = len(mnist_train_dataset)
-        samped_data_indices = np.random.choice(total_training_samples, num_sampled_data_points, replace=False)
-                    # samped_data_indices = np.random.choice(poisoned_trainset.data.shape[0], num_sampled_data_points, replace=False)
-        mnist_train_dataset.data = mnist_train_dataset.data[samped_data_indices, :, :]
-        mnist_train_dataset.targets = np.array(mnist_train_dataset.targets)[samped_data_indices]
-        
-        poisoned_train_loader = None
-        vanilla_test_loader = torch.utils.data.DataLoader(mnist_test_dataset,
-             batch_size=args.test_batch_size, shuffle=False, **kwargs)
-        targetted_task_test_loader = None
-        clean_train_loader = torch.utils.data.DataLoader(mnist_train_dataset,
-                batch_size=args.batch_size, shuffle=True, **kwargs)
-
-        # if args.poison_type == 'ardis':
-        #     # load ardis test set
-        #     with open("./data/ARDIS/ardis_test_dataset.pt", "rb") as saved_data_file:
-        #         ardis_test_dataset = torch.load(saved_data_file)
-
-        #     targetted_task_test_loader = torch.utils.data.DataLoader(ardis_test_dataset,
-        #          batch_size=args.test_batch_size, shuffle=False, **kwargs)
-
-        num_dps_poisoned_dataset = mnist_train_dataset.data.shape[0]
-    # NOTE: TuanNM
-
+        result = _load_mnist_dataset(args, num_sampled_data_points)
+    
     elif args.dataset == 'tiny-imagenet':
-        """
-        Poisoned data loading tiny-imagenet
-        """
-        
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-        vanilla_test_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder("data/tiny-imagenet-200/val", transforms.Compose([
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                normalize,
-            ])),
-            batch_size=args.test_batch_size, shuffle=False,
-            num_workers=args.num_workers, pin_memory=True)
-
-        transform_train = transforms.Compose([
-                transforms.RandomResizedCrop(224),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                normalize,
-            ])
-
-        transform_test = transforms.Compose([
-                    transforms.Resize(256),
-                    transforms.CenterCrop(224),
-                    transforms.ToTensor(),
-                    normalize,
-                ])
-
-        train_dataset = datasets.ImageFolder(
-            "data/tiny-imagenet-200/train", transform_train)
-
-        # we conduct an approach to down sample the training set here:
-        num_sampled_poisoned_data_points = num_sampled_data_points
-        num_total_datapoints = len(train_dataset.imgs)
-        samped_data_indices = np.random.choice(num_total_datapoints, num_sampled_poisoned_data_points, replace=False)
-        
-        # we del it to release memory
-        del train_dataset
-
-        # train_dataset = ImageFolderPoisonedTruncated(root="data/tiny-imagenet-200/train",
-        #                                             dataidxs=samped_data_indices,
-        #                                             transform=transform_train)
-        train_dataset = ImageFolderTruncated(root="data/tiny-imagenet-200/train",
-                                                    dataidxs=samped_data_indices,
-                                                    transform=transform_train)
-
-        logger.info("@@@@@@@@@@@@@@@@ Num dps in poisoned dataset: {}".format(len(train_dataset.imgs)))
-        
-        # clean_train_loader = torch.utils.data.DataLoader()
-        # then let's build a data loader on the top of it.
-        clean_train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
-            num_workers=args.num_workers, pin_memory=True)
-
-        # let's do this now and I'd hope that is the last thing we need
-        # def __init__(self, root, transform=None, target_transform=None,
-        #              loader=default_loader, is_valid_file=None):
-        # test_loader = ImageFolderPoisonedTruncatedTest(root="data/tiny-imagenet-200/val", # this dir is not useful, consider to remove it
-        #                                                 transform=transform_test)
-        # targetted_task_test_loader = torch.utils.data.DataLoader(
-        #         test_loader,
-        #         batch_size=128, shuffle=False,
-        #         num_workers=1, pin_memory=True)
-        test_loader, targetted_task_test_loader, poisoned_train_loader = None, None, None
-
-        # num_dps_poisoned_dataset=len(train_dataset.imgs)
-        # logger.info("Data points in targetted_task_test: {}".format(len(test_loader.imgs)))
-        num_dps_poisoned_dataset = num_sampled_data_points
-        
-        # vanilla_test_loader = None
-        # _train_dir = './data/tiny-imagenet-200/train'
-        # _val_dir = './data/tiny-imagenet-200/val'
-        
-        # # cinic_mean = [0.47889522, 0.47227842, 0.43047404]
-        # # cinic_std = [0.24205776, 0.23828046, 0.25874835]
-        
-        # # cinic_mean = [0.47889522, 0.47227842, 0.43047404]
-        # # cinic_std = [0.24205776, 0.23828046, 0.25874835]
-        
-        # _data_transforms = {
-        #     'train': transforms.Compose([
-        #         # transforms.Resize(224),
-        #         transforms.RandomHorizontalFlip(),
-        #         transforms.ToTensor(),
-        #     ]),
-        #     'val': transforms.Compose([
-        #         # transforms.Resize(224),
-        #         transforms.ToTensor(),
-        #     ]),
-        # }
-        
-        # tiny_mean=[0.485, 0.456, 0.406],
-        # tiny_std=[0.229, 0.224, 0.225],
-        
-        # trainset = ImageFolderTruncated(_train_dir, transform = _data_transforms['train'])
-        
-        # valset =   ImageFolderTruncated(_val_dir, transform = _data_transforms['val'])
-        
-        # vanilla_test_loader = torch.utils.data.DataLoader(valset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-        
-        # # clean_train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, **kwargs)
-        
-        
-        # # num_sampled_data_points = 2000
-        # samped_data_indices = np.random.choice(len(trainset), num_sampled_data_points, replace=False)
-        # # poisoned_trainset = trainset[samped_data_indices, :, :, :]
-        # truncated_train_set = ImageFolderTruncated(_train_dir, dataidxs=samped_data_indices, transform=_data_transforms['train'] )
-        # # truncated_train_set
-        
-        # clean_train_loader = torch.utils.data.DataLoader(truncated_train_set, batch_size=args.batch_size, shuffle=True, **kwargs)
-        
-        # # clean_samped_data_indices = np.random.choice(len(trainset), num_sampled_data_points, replace=False)
-        # # poisoned_trainset = trainset[samped_data_indices, :, :, :]
-        # # poisoned_train_loader = ImageFolderTruncated(_train_dir, dataidxs=samped_data_indices, transform=_data_transforms['train'] )
-        # poisoned_train_loader = clean_train_loader
-        
-        # targetted_task_test_loader, num_dps_poisoned_dataset = None, num_sampled_data_points
-        # pass
+        result = _load_tiny_imagenet_dataset(args, num_sampled_data_points)
     
     elif args.dataset == "cifar10":
-        if args.poison_type == "southwest":
-            transform_train = transforms.Compose([
-                transforms.RandomCrop(32, padding=4),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-            ])
-
-            transform_test = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),])
-
-            trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-
-            poisoned_trainset = copy.deepcopy(trainset)
-
-            if args.attack_case == "edge-case":
-                with open('./saved_datasets/southwest_images_new_train.pkl', 'rb') as train_f:
-                    saved_southwest_dataset_train = pickle.load(train_f)
-
-                with open('./saved_datasets/southwest_images_new_test.pkl', 'rb') as test_f:
-                    saved_southwest_dataset_test = pickle.load(test_f)
-            elif args.attack_case == "normal-case" or args.attack_case == "almost-edge-case":
-                with open('./saved_datasets/southwest_images_adv_p_percent_edge_case.pkl', 'rb') as train_f:
-                    saved_southwest_dataset_train = pickle.load(train_f)
-
-                with open('./saved_datasets/southwest_images_p_percent_edge_case_test.pkl', 'rb') as test_f:
-                    saved_southwest_dataset_test = pickle.load(test_f)
-            else:
-                raise NotImplementedError("Not Matched Attack Case ...")             
-
-            #
-            logger.info("OOD (Southwest Airline) train-data shape we collected: {}".format(saved_southwest_dataset_train.shape))
-            #sampled_targets_array_train = 2 * np.ones((saved_southwest_dataset_train.shape[0],), dtype =int) # southwest airplane -> label as bird
-            sampled_targets_array_train = 9 * np.ones((saved_southwest_dataset_train.shape[0],), dtype =int) # southwest airplane -> label as truck
-            
-            logger.info("OOD (Southwest Airline) test-data shape we collected: {}".format(saved_southwest_dataset_test.shape))
-            #sampled_targets_array_test = 2 * np.ones((saved_southwest_dataset_test.shape[0],), dtype =int) # southwest airplane -> label as bird
-            sampled_targets_array_test = 9 * np.ones((saved_southwest_dataset_test.shape[0],), dtype =int) # southwest airplane -> label as truck
-
-
-
-            # downsample the poisoned dataset #################
-            if args.attack_case == "edge-case":
-                num_sampled_poisoned_data_points = 100 # N
-                samped_poisoned_data_indices = np.random.choice(saved_southwest_dataset_train.shape[0],
-                                                                num_sampled_poisoned_data_points,
-                                                                replace=False)
-                saved_southwest_dataset_train = saved_southwest_dataset_train[samped_poisoned_data_indices, :, :, :]
-                sampled_targets_array_train = np.array(sampled_targets_array_train)[samped_poisoned_data_indices]
-                logger.info("!!!!!!!!!!!Num poisoned data points in the mixed dataset: {}".format(num_sampled_poisoned_data_points))
-            elif args.attack_case == "normal-case" or args.attack_case == "almost-edge-case":
-                num_sampled_poisoned_data_points = 100 # N
-                samped_poisoned_data_indices = np.random.choice(784,
-                                                                num_sampled_poisoned_data_points,
-                                                                replace=False)
-            ######################################################
-
-
-            # downsample the raw cifar10 dataset #################
-            # num_sampled_data_points = 1000 # M
-            samped_data_indices = np.random.choice(poisoned_trainset.data.shape[0], num_sampled_data_points, replace=False)
-            poisoned_trainset.data = poisoned_trainset.data[samped_data_indices, :, :, :]
-            poisoned_trainset.targets = np.array(poisoned_trainset.targets)[samped_data_indices]
-            logger.info("!!!!!!!!!!!Num clean data points in the mixed dataset: {}".format(num_sampled_data_points))
-            # keep a copy of clean data
-            clean_trainset = copy.deepcopy(poisoned_trainset)
-            ########################################################
-
-
-            poisoned_trainset.data = np.append(poisoned_trainset.data, saved_southwest_dataset_train, axis=0)
-            poisoned_trainset.targets = np.append(poisoned_trainset.targets, sampled_targets_array_train, axis=0)
-
-            logger.info("{}".format(poisoned_trainset.data.shape))
-            logger.info("{}".format(poisoned_trainset.targets.shape))
-            logger.info("{}".format(sum(poisoned_trainset.targets)))
-
-
-            #poisoned_train_loader = torch.utils.data.DataLoader(poisoned_trainset, batch_size=args.batch_size, shuffle=True, num_workers=2)
-            #trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, args.num_workers=2)
-            poisoned_train_loader = torch.utils.data.DataLoader(poisoned_trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
-            trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
-            clean_train_loader = torch.utils.data.DataLoader(clean_trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
-
-            testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-
-            poisoned_testset = copy.deepcopy(testset)
-            poisoned_testset.data = saved_southwest_dataset_test
-            poisoned_testset.targets = sampled_targets_array_test
-
-            # vanilla_test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=2)
-            # targetted_task_test_loader = torch.utils.data.DataLoader(poisoned_testset, batch_size=args.test_batch_size, shuffle=False, num_workers=2)
-            vanilla_test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-            targetted_task_test_loader = torch.utils.data.DataLoader(poisoned_testset, batch_size=args.test_batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-
-            num_dps_poisoned_dataset = poisoned_trainset.data.shape[0]
-
-        elif args.poison_type == "southwest-da":
-            # transform_train = transforms.Compose([
-            #     transforms.RandomCrop(32, padding=4),
-            #     transforms.RandomHorizontalFlip(),
-            #     transforms.ToTensor(),
-            #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-            # ])
-
-            # transform_poison = transforms.Compose([
-            #     transforms.RandomCrop(32, padding=4),
-            #     transforms.RandomHorizontalFlip(),
-            #     transforms.ToTensor(),
-            #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-            #     AddGaussianNoise(0., 0.05),
-            # ])
-
-            normalize = transforms.Normalize(mean=[x/255.0 for x in [125.3, 123.0, 113.9]],
-                                std=[x/255.0 for x in [63.0, 62.1, 66.7]])
-            transform_train = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Lambda(lambda x: F.pad(
-                                    Variable(x.unsqueeze(0), requires_grad=False),
-                                    (4,4,4,4),mode='reflect').data.squeeze()),
-                transforms.ToPILImage(),
-                transforms.RandomCrop(32),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                normalize,
-                ])
-
-            transform_poison = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Lambda(lambda x: F.pad(
-                                    Variable(x.unsqueeze(0), requires_grad=False),
-                                    (4,4,4,4),mode='reflect').data.squeeze()),
-                transforms.ToPILImage(),
-                transforms.RandomCrop(32),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                normalize,
-                AddGaussianNoise(0., 0.05),
-                ])            
-            # data prep for test set
-            transform_test = transforms.Compose([transforms.ToTensor(),normalize])
-
-            #transform_test = transforms.Compose([
-            #    transforms.ToTensor(),
-            #    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),])
-
-            trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-
-            #poisoned_trainset = copy.deepcopy(trainset)
-            #  class CIFAR10_Poisoned(data.Dataset):
-            #def __init__(self, root, clean_indices, poisoned_indices, dataidxs=None, train=True, transform_clean=None,
-            #    transform_poison=None, target_transform=None, download=False):
-
-            with open('./saved_datasets/southwest_images_new_train.pkl', 'rb') as train_f:
-                saved_southwest_dataset_train = pickle.load(train_f)
-
-            with open('./saved_datasets/southwest_images_new_test.pkl', 'rb') as test_f:
-                saved_southwest_dataset_test = pickle.load(test_f)
-
-            #
-            logger.info("OOD (Southwest Airline) train-data shape we collected: {}".format(saved_southwest_dataset_train.shape))
-            sampled_targets_array_train = 9 * np.ones((saved_southwest_dataset_train.shape[0],), dtype =int) # southwest airplane -> label as truck
-            
-            logger.info("OOD (Southwest Airline) test-data shape we collected: {}".format(saved_southwest_dataset_test.shape))
-            sampled_targets_array_test = 9 * np.ones((saved_southwest_dataset_test.shape[0],), dtype =int) # southwest airplane -> label as truck
-
-
-
-            # downsample the poisoned dataset ###########################
-            num_sampled_poisoned_data_points = 100 # N
-            samped_poisoned_data_indices = np.random.choice(saved_southwest_dataset_train.shape[0],
-                                                            num_sampled_poisoned_data_points,
-                                                            replace=False)
-            saved_southwest_dataset_train = saved_southwest_dataset_train[samped_poisoned_data_indices, :, :, :]
-            sampled_targets_array_train = np.array(sampled_targets_array_train)[samped_poisoned_data_indices]
-            logger.info("!!!!!!!!!!!Num poisoned data points in the mixed dataset: {}".format(num_sampled_poisoned_data_points))
-            ###############################################################
-
-
-            # downsample the raw cifar10 dataset #################
-            num_sampled_data_points = 1000 # M
-            samped_data_indices = np.random.choice(trainset.data.shape[0], num_sampled_data_points, replace=False)
-            tempt_poisoned_trainset = trainset.data[samped_data_indices, :, :, :]
-            tempt_poisoned_targets = np.array(trainset.targets)[samped_data_indices]
-            logger.info("!!!!!!!!!!!Num clean data points in the mixed dataset: {}".format(num_sampled_data_points))
-            ########################################################
-
-            poisoned_trainset = CIFAR10_Poisoned(root='./data', 
-                              clean_indices=np.arange(tempt_poisoned_trainset.shape[0]), 
-                              poisoned_indices=np.arange(tempt_poisoned_trainset.shape[0], tempt_poisoned_trainset.shape[0]+saved_southwest_dataset_train.shape[0]), 
-                              train=True, download=True, transform_clean=transform_train,
-                              transform_poison=transform_poison)
-            #poisoned_trainset = CIFAR10_truncated(root='./data', dataidxs=None, train=True, transform=transform_train, download=True)
-            clean_trainset = copy.deepcopy(poisoned_trainset)
-
-            poisoned_trainset.data = np.append(tempt_poisoned_trainset, saved_southwest_dataset_train, axis=0)
-            poisoned_trainset.target = np.append(tempt_poisoned_targets, sampled_targets_array_train, axis=0)
-
-            logger.info("{}".format(poisoned_trainset.data.shape))
-            logger.info("{}".format(poisoned_trainset.target.shape))
-
-
-            poisoned_train_loader = torch.utils.data.DataLoader(poisoned_trainset, batch_size=args.batch_size, shuffle=True)
-            clean_train_loader = torch.utils.data.DataLoader(clean_trainset, batch_size=args.batch_size, shuffle=True)
-            trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
-
-            testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-
-            poisoned_testset = copy.deepcopy(testset)
-            poisoned_testset.data = saved_southwest_dataset_test
-            poisoned_testset.targets = sampled_targets_array_test
-
-            vanilla_test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False)
-            targetted_task_test_loader = torch.utils.data.DataLoader(poisoned_testset, batch_size=args.test_batch_size, shuffle=False)
-
-            num_dps_poisoned_dataset = poisoned_trainset.data.shape[0]            
-
-        elif args.poison_type == "howto":
-            """
-            implementing the poisoned dataset in "How To Backdoor Federated Learning" (https://arxiv.org/abs/1807.00459)
-            """
-            transform_train = transforms.Compose([
-                transforms.RandomCrop(32, padding=4),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),])
-
-            transform_test = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),])
-
-            trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-
-            poisoned_trainset = copy.deepcopy(trainset)
-
-            ##########################################################################################################################
-            sampled_indices_train = [874, 49163, 34287, 21422, 48003, 47001, 48030, 22984, 37533, 41336, 3678, 37365,
-                                    19165, 34385, 41861, 39824, 561, 49588, 4528, 3378, 38658, 38735, 19500,  9744, 47026, 1605, 389]
-            sampled_indices_test = [32941, 36005, 40138]
-            cifar10_whole_range = np.arange(trainset.data.shape[0])
-            remaining_indices = [i for i in cifar10_whole_range if i not in sampled_indices_train+sampled_indices_test]
-            logger.info("!!!!!!!!!!!Num poisoned data points in the mixed dataset: {}".format(len(sampled_indices_train+sampled_indices_test)))
-            saved_greencar_dataset_train = trainset.data[sampled_indices_train, :, :, :]
-            #########################################################################################################################
-
-            # downsample the raw cifar10 dataset ####################################################################################
-            num_sampled_data_points = 500-len(sampled_indices_train)
-            samped_data_indices = np.random.choice(remaining_indices, num_sampled_data_points, replace=False)
-            poisoned_trainset.data = poisoned_trainset.data[samped_data_indices, :, :, :]
-            poisoned_trainset.targets = np.array(poisoned_trainset.targets)[samped_data_indices]
-            logger.info("!!!!!!!!!!!Num clean data points in the mixed dataset: {}".format(num_sampled_data_points))
-            clean_trainset = copy.deepcopy(poisoned_trainset)
-            ##########################################################################################################################
-
-            # we load the test since in the original paper they augment the 
-            with open('./saved_datasets/green_car_transformed_test.pkl', 'rb') as test_f:
-                saved_greencar_dataset_test = pickle.load(test_f)
-
-            #
-            logger.info("Backdoor (Green car) train-data shape we collected: {}".format(saved_greencar_dataset_train.shape))
-            sampled_targets_array_train = 2 * np.ones((saved_greencar_dataset_train.shape[0],), dtype =int) # green car -> label as bird
-            
-            logger.info("Backdoor (Green car) test-data shape we collected: {}".format(saved_greencar_dataset_test.shape))
-            sampled_targets_array_test = 2 * np.ones((saved_greencar_dataset_test.shape[0],), dtype =int) # green car -> label as bird/
-
-
-            poisoned_trainset.data = np.append(poisoned_trainset.data, saved_greencar_dataset_train, axis=0)
-            poisoned_trainset.targets = np.append(poisoned_trainset.targets, sampled_targets_array_train, axis=0)
-
-            logger.info("Poisoned Trainset Shape: {}".format(poisoned_trainset.data.shape))
-            logger.info("Poisoned Train Target Shape:{}".format(poisoned_trainset.targets.shape))
-
-
-            poisoned_train_loader = torch.utils.data.DataLoader(poisoned_trainset, batch_size=args.batch_size, shuffle=True)
-            clean_train_loader = torch.utils.data.DataLoader(clean_trainset, batch_size=args.batch_size, shuffle=True)
-            trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
-
-            testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-
-            poisoned_testset = copy.deepcopy(testset)
-            poisoned_testset.data = saved_greencar_dataset_test
-            poisoned_testset.targets = sampled_targets_array_test
-
-            vanilla_test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False)
-            targetted_task_test_loader = torch.utils.data.DataLoader(poisoned_testset, batch_size=args.test_batch_size, shuffle=False)
-            num_dps_poisoned_dataset = poisoned_trainset.data.shape[0]
-
-        elif args.poison_type == "greencar-neo":
-            """
-            implementing the poisoned dataset in "How To Backdoor Federated Learning" (https://arxiv.org/abs/1807.00459)
-            """
-            transform_train = transforms.Compose([
-                transforms.RandomCrop(32, padding=4),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),])
-
-            transform_test = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),])
-
-            trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-
-            poisoned_trainset = copy.deepcopy(trainset)
-
-            with open('./saved_datasets/new_green_cars_train.pkl', 'rb') as train_f:
-                saved_new_green_cars_train = pickle.load(train_f)
-
-            with open('./saved_datasets/new_green_cars_test.pkl', 'rb') as test_f:
-                saved_new_green_cars_test = pickle.load(test_f)
-
-            # we use the green cars in original cifar-10 and new collected green cars
-            ##########################################################################################################################
-            num_sampled_poisoned_data_points = 100 # N
-            sampled_indices_green_car = [874, 49163, 34287, 21422, 48003, 47001, 48030, 22984, 37533, 41336, 3678, 37365,
-                                    19165, 34385, 41861, 39824, 561, 49588, 4528, 3378, 38658, 38735, 19500,  9744, 47026, 1605, 389] + [32941, 36005, 40138]
-            cifar10_whole_range = np.arange(trainset.data.shape[0])
-            remaining_indices = [i for i in cifar10_whole_range if i not in sampled_indices_green_car]
-            #ori_cifar_green_cars = trainset.data[sampled_indices_green_car, :, :, :]
-
-            samped_poisoned_data_indices = np.random.choice(saved_new_green_cars_train.shape[0],
-                                                            #num_sampled_poisoned_data_points-len(sampled_indices_green_car),
-                                                            num_sampled_poisoned_data_points,
-                                                            replace=False)
-            saved_new_green_cars_train = saved_new_green_cars_train[samped_poisoned_data_indices, :, :, :]
-
-            #saved_greencar_dataset_train = np.append(ori_cifar_green_cars, saved_new_green_cars_train, axis=0)
-            saved_greencar_dataset_train = saved_new_green_cars_train
-            logger.info("!!!!!!!!!!!Num poisoned data points in the mixed dataset: {}".format(saved_greencar_dataset_train.shape[0]))
-            #########################################################################################################################
-
-            # downsample the raw cifar10 dataset ####################################################################################
-            num_sampled_data_points = 400
-            samped_data_indices = np.random.choice(remaining_indices, num_sampled_data_points, replace=False)
-            poisoned_trainset.data = poisoned_trainset.data[samped_data_indices, :, :, :]
-            poisoned_trainset.targets = np.array(poisoned_trainset.targets)[samped_data_indices]
-            logger.info("!!!!!!!!!!!Num clean data points in the mixed dataset: {}".format(num_sampled_data_points))
-            clean_trainset = copy.deepcopy(poisoned_trainset)
-            ##########################################################################################################################
-
-            #
-            logger.info("Backdoor (Green car) train-data shape we collected: {}".format(saved_greencar_dataset_train.shape))
-            sampled_targets_array_train = 2 * np.ones((saved_greencar_dataset_train.shape[0],), dtype =int) # green car -> label as bird
-            
-            logger.info("Backdoor (Green car) test-data shape we collected: {}".format(saved_new_green_cars_test.shape))
-            sampled_targets_array_test = 2 * np.ones((saved_new_green_cars_test.shape[0],), dtype =int) # green car -> label as bird/
-
-
-            poisoned_trainset.data = np.append(poisoned_trainset.data, saved_greencar_dataset_train, axis=0)
-            poisoned_trainset.targets = np.append(poisoned_trainset.targets, sampled_targets_array_train, axis=0)
-
-            logger.info("Poisoned Trainset Shape: {}".format(poisoned_trainset.data.shape))
-            logger.info("Poisoned Train Target Shape:{}".format(poisoned_trainset.targets.shape))
-
-
-            poisoned_train_loader = torch.utils.data.DataLoader(poisoned_trainset, batch_size=args.batch_size, shuffle=True)
-            clean_train_loader = torch.utils.data.DataLoader(clean_trainset, batch_size=args.batch_size, shuffle=True)
-            trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
-
-            testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-
-            poisoned_testset = copy.deepcopy(testset)
-            poisoned_testset.data = saved_new_green_cars_test
-            poisoned_testset.targets = sampled_targets_array_test
-
-            vanilla_test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False)
-            targetted_task_test_loader = torch.utils.data.DataLoader(poisoned_testset, batch_size=args.test_batch_size, shuffle=False)
-            num_dps_poisoned_dataset = poisoned_trainset.data.shape[0]
-
-    return poisoned_train_loader, vanilla_test_loader, targetted_task_test_loader, num_dps_poisoned_dataset, clean_train_loader
+        result = _load_cifar10_dataset(args, num_sampled_data_points)
+    
+    else:
+        raise ValueError(f"Unsupported dataset: {args.dataset}")
+    
+    # Return as tuple to maintain compatibility
+    return (
+        result['poisoned_train_loader'],
+        result['vanilla_test_loader'],
+        result['targetted_task_test_loader'],
+        result['num_dps_poisoned_dataset'],
+        result['clean_train_loader']
+    )
 
 def seed_experiment(seed=0):
     # seed = 1234
@@ -1453,32 +1102,6 @@ def get_grad_mask(model, optimizer, clean_dataloader, ratio=0.5, device="cpu", s
             k_layer += 1
     return mask_grad_list, cummulative_mask
 
-# def compute_hessian(model, loss):
-#     """
-#     Computes Hessian per layer of the loss with respect to self.parameters, 
-#     currently implemented only for gates
-#     """
-
-#     temp_hessian = list()
-#     for layer_indx, parameter in model.named_parameters():
-#         print("Computing Hessian current/total layers:",layer_indx,"/",len(list(model.parameters())))
-#         grad_params = torch.autograd.grad(loss.mean(), parameter, create_graph=True)
-#         length_grad = len(grad_params[0])
-#         hessian = torch.zeros(length_grad, length_grad)
-
-#         cnt = 0
-#         for parameter_loc in range(len(parameter)):
-#             if parameter[parameter_loc].data.cpu().numpy().sum() == 0.0:
-#                 continue
-#             # import IPython
-#             # IPython.embed()
-#             grad_params2 = torch.autograd.grad(grad_params[0][parameter_loc].mean(), parameter, create_graph=True)
-#             hessian[parameter_loc, :] = grad_params2[0].data
-
-#         temp_hessian.append(torch.FloatTensor(hessian.cpu().numpy()).cuda())
-
-#     return temp_hessian
-
 def compute_hessian(model, loss):
     """
     Computes the Hessian matrix of the loss function with respect to the model parameters.
@@ -1509,93 +1132,18 @@ def compute_hessian(model, loss):
 
     return H
 
-# def get_grad_mask(model, optimizer, clean_dataloader, ratio=0.5, device="cpu", save_f=False, historical_grad_mask=None, cnt_masks=0):
-#     """
-#     Generate a gradient mask based on the given dataset
-#     This function is employed for Neurotoxin method
-#     https://proceedings.mlr.press/v162/zhang22w.html
-#     """        
-#     # This is our customized func to get the gradient mask
-
-#     model.train()
-#     model.zero_grad()
-#     loss_fn = nn.CrossEntropyLoss()
-#     # Let's assume we have a model trained on clean data and we conduct aggregation for all layer
-#     for batch_idx, batch in enumerate(clean_dataloader):
-#         bs = len(batch)
-#         data, targets = batch
-#         clean_images, clean_targets = copy.deepcopy(data).to(device), copy.deepcopy(targets).to(device)
-#         optimizer.zero_grad()
-#         output = model(clean_images)
-#         loss_clean = loss_fn(output, clean_targets)
-#         loss_clean.backward(retain_graph=True)
-#     mask_grad_list = []
-#     grad_list = []
-#     k_layer = 0
-
-#     for _, parms in model.named_parameters():
-#         if parms.requires_grad:
-#             nunits = parms.size(0)
-#             # criteria_params = (parms * parms.grad).data.pow(2).view(nunits,-1).sum(dim=1)
-#             criteria_params = (parms * parms.grad).data.pow(2).view(-1)
-#             grad_list.append(criteria_params)
-
-#     grad_list = torch.cat(grad_list).to(device)
-#     # print(f"grad_list: {grad_list}")
-#     _, indices = torch.topk(-1*grad_list, int(len(grad_list)*ratio))
-#     # print(f"indices: {indices}")
-#     mask_flat_all_layer = torch.zeros(len(grad_list)).to(device)
-#     mask_flat_all_layer[indices] = 1.0
-
-#     if historical_grad_mask:
-#         mask_flat_all_layer = ((cnt_masks-1)/cnt_masks)*historical_grad_mask+(1/cnt_masks)*mask_flat_all_layer
-#         _, indices = torch.topk(-1*mask_flat_all_layer, int(len(mask_flat_all_layer)*ratio))
-#         mask_flat_all_layer = torch.zeros(len(grad_list)).to(device)
-#         mask_flat_all_layer[indices] = 1.0
-#     count = 0
-#     percentage_mask_list = []
-#     k_layer = 0
-#     grad_abs_percentage_list = []
-#     for _, parms in model.named_parameters():
-#         if parms.requires_grad:
-#             gradients_length = len(parms.grad.abs().view(-1))
-
-#             mask_flat = mask_flat_all_layer[count:count + gradients_length ].to(device)
-#             mask_grad_list.append(mask_flat.reshape(parms.grad.size()).to(device))
-#             count += gradients_length
-#             # percentage_mask1 = mask_flat.sum().item()/float(gradients_length)*100.0
-
-#             # percentage_mask_list.append(percentage_mask1)
-
-#             # grad_abs_percentage_list.append(grad_abs_sum_list[k_layer]/np.sum(grad_abs_sum_list))
-
-#             k_layer += 1
-#     # if historical_grad_mask:
-#     #     print(f"cnt_masks: {cnt_masks}")
-#     #     mask_grad_list = ((cnt_masks-1)/cnt_masks)*historical_grad_mask+(1/cnt_masks)*mask_grad_list
-#     # _, indices = torch.topk(-1*mask_grad_list, int(len(grad_list)*ratio))
-#     return mask_grad_list, mask_flat_all_layer
-
 def vectorize_net(net):
     return torch.cat([p.view(-1) for p in net.parameters()])
 
 def get_grad_mask_F3BA(model_vec, ori_model_vec, optimizer=None, clean_dataloader=None, ratio=0.01, device="cpu"):
-    # DIRECTIONAL CRITERIA
-    # model_vec = vectorize_net(model)
-    # ori_model_vec = vectorize_net(ori_model)
-    # important_scores = torch.zeros(model_vec.shape)
-    # print(f"important_scores.shape: {important_scores.shape}")
     important_scores = (model_vec - ori_model_vec).mul(ori_model_vec)
-    # grad_list = torch.cat(important_scores)
     _, indices = torch.topk(-1*important_scores, int(len(important_scores)*ratio))
     mask_flat_all_layer = torch.zeros(len(important_scores))
     mask_flat_all_layer[indices] = 1.0
     return mask_flat_all_layer
-    # print(f"mask_flat_all_layer: {mask_flat_all_layer}")
 
 def apply_grad_mask(model, mask_grad_list):
     mask_grad_list_copy = iter(mask_grad_list)
-    # print(f"mask_grad_list_copy: {mask_grad_list_copy}")
     for name, parms in model.named_parameters():
         if parms.requires_grad:
             parms.grad = parms.grad * next(mask_grad_list_copy)

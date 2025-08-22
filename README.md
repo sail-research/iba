@@ -1,5 +1,4 @@
-# Backdoor Attack and Defense in Federated Learning (FL)
-This code is based on the setup for backdoor attack and defense in Federated Learning (FL) from the repository [Attack of the Tails: Yes, You Really Can Backdoor Federated Learning](https://github.com/ksreenivasan/OOD_Federated_Learning).
+# IBA: Towards Irreversible Backdoor Attacks in Federated Learning (NeurIPS'23)
 
 ## 1. Setup
 
@@ -8,16 +7,19 @@ This code is based on the setup for backdoor attack and defense in Federated Lea
 ```bash
 make install
 ```
-2. Download the data and pretrained models for MNIST, CIFAR-10, and Tiny-ImageNet from the [DBA Github repository](https://github.com/AI-secure/DBA).
-
-
+2. The pretrained models are stored at `./checkpoint`.
+3. Logs will be saved at `./results`.
 
 ## 2. Running the Experiments
 To reproduce the results presented in the paper, run the following commands:
 ```bash
-./exps/mnist-multi-krum.sh
-./exps/cifar10-multi-krum.sh 
-./exps/timagenet-multi-krum.sh 
+./exps/iba_cifar10_fedavg.sh # IBA under FedAvg (fixed-freq)
+
+./exps/iba_cifar10_fedavg_multikrum.sh # IBA with CIFAR10 under MultiKrum
+
+./exps/iba_mnist_fedavg_multikrum.sh # IBA with MNIST under MultiKrum
+
+./exps/iba_cifar10_fedavg_fixed_pool.sh # # IBA with CIFAR10 (fixed-pool)
 ```
 
 You can modify the following parameters to reproduce different scenarios:
@@ -27,12 +29,14 @@ You can modify the following parameters to reproduce different scenarios:
 - --defense_method: Choose the defense method.
 - --attack_method: Select the attack method.
 - --attack_freq: Set the attack frequency.
-- --attack_case: Specify the attack case.
 - --model_replacement: Enable or disable model replacement.
+- --attacker_pool_size: Number of attackers
+- --num_nets: Total number of clients
 
 Please refer to the paper for detailed results and additional configurations.
 
-Please note that I have made some assumptions and corrections based on the given context. Make sure to review and adjust the changes if necessary.
+# Acknowledgements
+This code is based on the setup for backdoor attack and defense in Federated Learning (FL) from the repository [Attack of the Tails: Yes, You Really Can Backdoor Federated Learning](https://github.com/ksreenivasan/OOD_Federated_Learning).
 
 Please cite the paper, as below, when using this repository:
 ```

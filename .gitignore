@@ -1,0 +1,80 @@
+# Bytecode / compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging / distribution
+build/
+dist/
+.eggs/
+*.egg-info/
+*.egg
+wheels/
+pip-wheel-metadata/
+*.spec   # PyInstaller
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Tests / coverage
+.tox/
+.nox/
+.pytest_cache/
+.coverage
+.coverage.*
+.cache/
+htmlcov/
+coverage.xml
+
+# Type checkers / linters
+.mypy_cache/
+.pytype/
+.pyre/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints
+.ipython/
+profile_default/
+
+# Framework odds & ends
+db.sqlite3
+*.sqlite3
+instance/
+*.mo
+
+# Logs & temp
+*.log
+logs/
+tmp/
+*.pid
+
+# Environment & secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# IDE / OS files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+
+saved_models/**/*/
+saved_path/**/*/
+data/
+results/
