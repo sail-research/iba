@@ -9,6 +9,10 @@ make install
 ```
 2. The pretrained models are stored at `./checkpoint`.
 3. Logs will be saved at `./results`.
+4. MNIST/CIFAR-10 datasets will be automatically downloaded. Please download and process Tiny-ImageNet-200 from https://github.com/AI-secure/DBA. The raw data could be downloaded using `wget http://cs231n.stanford.edu/tiny-imagenet-200.zip`.
+The checkpoint for imagenet can be downloaded [here](https://vanderbilt.box.com/s/o3w002m4b9w7l5hysr5ob3xbn5ieo670).
+
+
 
 ## 2. Running the Experiments
 To reproduce the results presented in the paper, run the following commands:
