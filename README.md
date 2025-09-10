@@ -54,3 +54,7 @@ Please cite the paper, as below, when using this repository:
 }
 ```
 
+# License
+
+This project is licensed under the [MIT License](LICENSE).  
+You are free to use, modify, and distribute this software under the terms of the license.
